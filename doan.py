@@ -67,7 +67,7 @@ class App:
             ("Xóa dữ liệu", self.open_delete_data_form),
             ("Làm sạch dữ liệu", self.clean_data),
             ("Chuẩn hóa dữ liệu", self.normalize_data),
-            ("Trực quan hóa dữ liệu", self.plot_data),
+            ("Trực quan hóa dữ liệu", self.plot_data), 
         ]
 
         for text, command in button_commands:
