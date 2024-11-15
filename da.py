@@ -118,7 +118,7 @@ def plot_data(df):
 
 # Hàm main
 def main():
-    filename = 'Cleaned_data_for_model.csv'
+    filename = 'Cleaned_data_for_model (1).csv'
 
     while True:
         print("\nChọn chức năng:")
