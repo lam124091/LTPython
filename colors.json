@@ -1,8 +1,50 @@
 {
     "red": "#FF0000",
-    "green": "#00FF00",
+    "green": "#00FF00", 
     "blue": "#0000FF",
+    
     "yellow": "#FFFF00",
-    "cyan": "#00FFFF",
-    "magenta": "#FF00FF"
+    "cyan": "#00FFFF", 
+    "magenta": "#FF00FF",
+    
+    "white": "#FFFFFF",
+    "black": "#000000",
+    "grey": "#808080",
+    "darkGrey": "#404040",
+    "lightGrey": "#C0C0C0",
+    
+    "orange": "#FFA500",
+    "coral": "#FF7F50",
+    "salmon": "#FA8072",
+    "crimson": "#DC143C",
+    "maroon": "#800000",
+    "brown": "#A52A2A",
+    
+    "purple": "#800080",
+    "indigo": "#4B0082",
+    "turquoise": "#40E0D0",
+    "teal": "#008080",
+    "navy": "#000080",
+    "skyBlue": "#87CEEB",
+    
+    "pink": "#FFC0CB",
+    "lavender": "#E6E6FA",
+    "mint": "#98FF98",
+    "peach": "#FFDAB9",
+    "lilac": "#C8A2C8",
+    
+    "beige": "#F5F5DC",
+    "tan": "#D2B48C",
+    "khaki": "#F0E68C",
+    "olive": "#808000",
+    "sienna": "#A0522D",
+    
+    "silver": "#C0C0C0",
+    "gold": "#FFD700",
+    "bronze": "#CD7F32",
+    "platinum": "#E5E4E2",
+    
+    "transparentBlack": "#00000080",
+    "transparentWhite": "#FFFFFF80",
+    "transparentGrey": "#80808080"
 }
