@@ -5,7 +5,7 @@ import seaborn as sns
 
 # Đọc dữ liệu từ file CSV
 def read_data(filename):
-    return pd.read_csv(filename)
+    return pd.read_csv(filename, sep=",", header = 0, index_col = None)
 
 # Create - nhập vào một dữ liệu mới từ bàn phím
 def add_row(filename):
