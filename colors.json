@@ -1,4 +1,21 @@
 {
+    "primary": {
+        "bg": "#FFFFFF",
+        "fg": "#000000"
+    },
+    "header": {
+        "bg": "#4a90e2",
+        "fg": "#FFFFFF"
+    },
+    "alternate": {
+        "bg": "#F0F0F0",
+        "fg": "#000000"
+    },
+    "selected": {
+        "bg": "#0078D7",
+        "fg": "#FFFFFF"
+    },
+    
     "red": "#FF0000",
     "green": "#00FF00", 
     "blue": "#0000FF",
@@ -44,6 +61,6 @@
     "bronze": "#CD7F32",
     "platinum": "#E5E4E2",
     
-    "transparentBlack": "#00000080",
-    "transparentWhite": "#FFFFFF80"
+    "transparentBlack": "#808080",
+    "transparentWhite": "#FFFFFF"
 }
