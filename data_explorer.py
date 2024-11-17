@@ -82,28 +82,75 @@ class DataExplorer:
     def create_visualization_tab(self):
         viz_frame = ttk.Frame(self.notebook, style='SubFrame.TFrame', padding="20")
         self.notebook.add(viz_frame, text='Biểu đồ phân tích')
-        
+    
         # Tiêu đề
         title = ttk.Label(viz_frame, 
-                         text="Phân tích trực quan", 
-                         style='Title.TLabel')
+                        text="Phân tích trực quan", 
+                        style='Title.TLabel')
         title.pack(fill='x', pady=(0,20))
-        
+    
         # Frame cho controls
         control_frame = ttk.Frame(viz_frame, style='SubFrame.TFrame')
         control_frame.pack(fill='x', pady=(0,10))
-        
+    
         # Dropdown chọn loại biểu đồ
         ttk.Label(control_frame, text="Loại biểu đồ:").pack(side='left', padx=5)
         plot_types = ['Histogram', 'Box Plot', 'Scatter Plot', 'Bar Chart']
         self.plot_type = ttk.Combobox(control_frame, values=plot_types, state='readonly')
         self.plot_type.set(plot_types[0])
         self.plot_type.pack(side='left', padx=5)
-        
+    
+        # Button to generate the plot
+        plot_button = ttk.Button(control_frame, text="Vẽ biểu đồ", command=self.plot_graph)
+        plot_button.pack(side='left', padx=5)
+
         # Frame cho biểu đồ
         self.plot_frame = ttk.Frame(viz_frame, style='SubFrame.TFrame')
         self.plot_frame.pack(fill='both', expand=True, pady=10)
 
+    def plot_graph(self):
+        # Clear the previous plot
+        for widget in self.plot_frame.winfo_children():
+            widget.destroy()
+    
+        selected_plot = self.plot_type.get()
+    
+        if selected_plot == 'Bar Chart':
+            # Biểu đồ cột giá tiền các loại bất động sản
+            plt.figure(figsize=(10, 6))
+            plt.bar(self.app.df['property_type'], self.app.df['price'], color='g', width=0.5, label="Price")
+            plt.xlabel('Loại bất động sản')
+            plt.ylabel('Giá')
+            plt.title('Quan hệ giữa loại bất động sản và giá')
+            plt.xticks(rotation=45)
+            plt.legend()
+            plt.tight_layout()
+            canvas = FigureCanvasTkAgg(plt.gcf(), master=self.plot_frame)
+            canvas.draw()
+            canvas.get_tk_widget().pack(fill='both', expand=True)
+
+        elif selected_plot == 'Histogram':
+            plt.scatter(df['Area_in_Marla'], df['price'], color='coral')
+            plt.title("Mối quan hệ giữa Diện tích và Giá")
+            plt.xlabel("Diện tích (Marla)")
+            plt.ylabel("Giá (VNĐ)")
+            plt.show()
+
+        elif selected_plot == 'Box Plot':
+            # Chưa thêm vào vì chưa test được
+            pass
+
+        elif selected_plot == 'Scatter Plot':
+            # Biểu đồ phân tán giữa diện tích và giá
+            plt.figure(figsize=(10, 6))
+            plt.scatter(self.app.df['Area_in_Marla'], self.app.df['price'], color='coral')
+            plt.title("Mối quan hệ giữa Diện tích và Giá")
+            plt.xlabel("Diện tích (Marla)")
+            plt.ylabel("Giá (VNĐ)")
+            plt.tight_layout()
+            canvas = FigureCanvasTkAgg(plt.gcf(), master=self.plot_frame)
+            canvas.draw()
+            canvas.get_tk_widget().pack(fill='both', expand=True)
     def create_correlation_tab(self):
         corr_frame = ttk.Frame(self.notebook, style='SubFrame.TFrame', padding="20")
         self.notebook.add(corr_frame, text='Tương quan')
