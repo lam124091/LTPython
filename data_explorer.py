@@ -137,7 +137,17 @@ class DataExplorer:
             plt.show()
 
         elif selected_plot == 'Box Plot':
-            # Chưa thêm vào vì chưa test được
+            # Box plot for property prices by property type
+            plt.figure(figsize=(10, 6))
+            self.app.df.boxplot(column='price', by='property_type', grid=False)
+            plt.title("Box Plot giá của các loại bất động sản")
+            plt.suptitle("")  # Suppress the default title to avoid redundancy
+            plt.xlabel("Loại bất động sản")
+            plt.ylabel("Giá")
+            plt.tight_layout()
+            canvas = FigureCanvasTkAgg(plt.gcf(), master=self.plot_frame)
+            canvas.draw()
+            canvas.get_tk_widget().pack(fill='both', expand=True)
             pass
 
         elif selected_plot == 'Scatter Plot':
