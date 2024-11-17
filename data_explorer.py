@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from config import DATA_PATH
 from utils import read_data
+import seaborn as sns
 
 class DataExplorer:
     def __init__(self, master, app):
@@ -130,11 +131,16 @@ class DataExplorer:
             canvas.get_tk_widget().pack(fill='both', expand=True)
 
         elif selected_plot == 'Histogram':
-            plt.scatter(df['Area_in_Marla'], df['price'], color='coral')
-            plt.title("Mối quan hệ giữa Diện tích và Giá")
-            plt.xlabel("Diện tích (Marla)")
-            plt.ylabel("Giá (VNĐ)")
-            plt.show()
+            plt.figure(figsize=(10, 6))
+            plt.hist(self.app.df['price'], bins=30, color='coral', edgecolor='black')  # Adjust bins as needed
+            plt.title("Phân phối giá bất động sản")
+            plt.xlabel("Giá (VNĐ)")
+            plt.ylabel("Số lượng")
+            plt.grid(axis='y', alpha=0.75)
+            plt.tight_layout()
+            canvas = FigureCanvasTkAgg(plt.gcf(), master=self.plot_frame)
+            canvas.draw()
+            canvas.get_tk_widget().pack(fill='both', expand=True)
 
         elif selected_plot == 'Box Plot':
             # Box plot for property prices by property type
@@ -175,6 +181,18 @@ class DataExplorer:
         self.heatmap_frame = ttk.Frame(corr_frame, style='SubFrame.TFrame')
         self.heatmap_frame.pack(fill='both', expand=True)
 
+        # Tính toán ma trận tương quan
+        correlation_matrix = self.app.df.corr()
+
+        # Vẽ heatmap
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(correlation_matrix, annot=True, fmt=".2f", cmap='coolwarm', square=True, cbar_kws={"shrink": .8})
+        plt.title("Ma trận tương quan")
+    
+        # Hiển thị heatmap trong Tkinter
+        canvas = FigureCanvasTkAgg(plt.gcf(), master=self.heatmap_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill='both', expand=True)
     def display_basic_stats(self, parent_frame):
         # Tạo Text widget với scrollbar
         text_frame = ttk.Frame(parent_frame)
