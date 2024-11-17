@@ -166,9 +166,9 @@ def plot_data(df):
   plt.xlabel('Loại bất động sản')
   plt.ylabel('Giá')
   plt.title('Quan hệ giữa loại bất động sản và giá')
-  plt.xticks(rotation=45)  # Rotate x labels for better readability
+  plt.xticks(rotation=45)
   plt.legend()
-  plt.tight_layout()  # Adjust layout to make room for rotated labels
+  plt.tight_layout()
   plt.show()
 
   #Biểu đồ cột cho số lượng các loại bất động sản
@@ -184,7 +184,10 @@ def plot_data(df):
   plt.xlabel("Diện tích (Marla)")
   plt.ylabel("Giá (VNĐ)")
   plt.show()
-
+def export_data(df):
+    filename = input("Nhập tên file để lưu (ví dụ: output.csv): ")
+    df.to_csv(filename, index=False)
+    print(f"Dữ liệu đã được xuất vào {filename}.")
 class App:
     def __init__(self, master):
         self.master = master
@@ -419,6 +422,8 @@ def main():
         elif choice == "7":
             df = read_data(filename)
             plot_data(df)
+        elif choice == "8":
+            export_data(df) 
         elif choice == "0":
             print("Thoát chương trình.")
             break
