@@ -77,6 +77,9 @@ class DataViewer:
         self.setup_tree()
         self.setup_controls()
         self.load_data()
+        
+        # Bind chuột phải để hiện
+        self.master.bind('<Button-3>', self.toggle_menu)
 
     def setup_styles(self):
         # Style cho frame nội dung
@@ -203,7 +206,7 @@ class DataViewer:
         # Nút trang sau
         self.next_btn = ttk.Button(
             center_frame,
-            text="Trang sau ►",
+            text="Trang sau ",
             command=self.next_page,
             style="Nav.TButton"
         )
@@ -321,70 +324,103 @@ class DataViewer:
                 self.delete_row(item)
 
     def edit_row(self, item):
-        # Lấy dữ liệu của dòng được chọn
-        values = self.tree.item(item)['values']
-        tags = self.tree.item(item)['tags']
-        
-        # Lấy index từ tags
-        row_index = int(tags[1].split('_')[1])
-        
-        # Tạo cửa sổ edit
-        edit_window = tk.Toplevel(self.master)
-        edit_window.title("Chỉnh sửa dữ liệu")
-        edit_window.geometry("400x500")
-        
-        # Frame cho form
-        form_frame = ttk.Frame(edit_window)
-        form_frame.pack(fill='both', expand=True, padx=20, pady=10)
-        
-        # Tạo các trường nhập liệu
-        entries = {}
-        for i, col in enumerate(self.df.columns):
-            frame = ttk.Frame(form_frame)
-            frame.pack(fill='x', pady=5)
-            ttk.Label(frame, text=f"{col}:", width=15).pack(side='left')
-            entry = ttk.Entry(frame, width=30)
-            entry.insert(0, str(values[i]))
-            entry.pack(side='left', padx=5)
-            entries[col] = entry
+        try:
+            current_values = self.tree.item(item)['values']
+            if not current_values:
+                return
             
-        # Nút lưu
-        ttk.Button(
-            form_frame,
-            text="Lưu",
-            command=lambda: self.save_edit(row_index, entries, edit_window)
-        ).pack(pady=20)
-
-    def save_edit(self, row_index, entries, window):
-        # Cập nhật DataFrame
-        for col, entry in entries.items():
-            self.df.at[row_index, col] = entry.get()
-        
-        # Lưu vào file
-        self.app.save_data(self.df)
-        
-        # Cập nht hiển thị
-        self.load_data()
-        
-        # Đóng cửa sổ edit
-        window.destroy()
-        messagebox.showinfo("Thành công", "Đã cập nhật dữ liệu!")
+            edit_window = tk.Toplevel(self.master)
+            edit_window.title("Sửa dữ liệu")
+            edit_window.geometry("400x500")
+            
+            entries = {}
+            for i, col in enumerate(self.df.columns):
+                frame = ttk.Frame(edit_window)
+                frame.pack(fill='x', padx=5, pady=2)
+                
+                ttk.Label(frame, text=col).pack(side='left')
+                entry = self.create_entry_with_validation(frame, col)
+                entry.insert(0, str(current_values[i]))
+                entry.pack(side='right', fill='x', expand=True)
+                entries[col] = entry
+            
+            def save_changes():
+                try:
+                    # Thu thập dữ liệu mới
+                    new_values = {}
+                    numeric_columns = ['price', 'bathrooms', 'bedrooms', 'area']
+                    
+                    for col, entry in entries.items():
+                        value = entry.get().strip()
+                        
+                        # Xử lý chuyển đổi kiểu dữ liệu
+                        if col in numeric_columns:
+                            try:
+                                # Chuyển đổi sang float cho các cột số
+                                value = float(value) if value else None
+                            except ValueError:
+                                messagebox.showerror(
+                                    "Lỗi", 
+                                    f"Giá trị '{value}' không hợp lệ cho cột {col}. Vui lòng nhập số!",
+                                    parent=edit_window
+                                )
+                                return
+                        new_values[col] = value
+                    
+                    # Tìm dòng cần cập nhật trong DataFrame
+                    mask = pd.Series([True] * len(self.df))
+                    for i, col in enumerate(self.df.columns):
+                        mask &= (self.df[col].astype(str) == str(current_values[i]))
+                    
+                    # Cập nhật từng cột một với kiểu dữ liệu phù hợp
+                    for col, value in new_values.items():
+                        if col in numeric_columns:
+                            self.df.loc[mask, col] = pd.to_numeric(value, errors='coerce')
+                        else:
+                            self.df.loc[mask, col] = value
+                    
+                    # Lưu DataFrame
+                    if self.app.save_data(self.df):
+                        messagebox.showinfo("Thành công", "Đã cập nhật dữ liệu!", parent=edit_window)
+                        edit_window.destroy()
+                        self.load_data()
+                
+                except Exception as e:
+                    messagebox.showerror("Lỗi", f"Không thể cập nhật dữ liệu: {str(e)}", parent=edit_window)
+            
+            ttk.Button(edit_window, text="Lưu", command=save_changes).pack(pady=10)
+            
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Không thể sửa dữ liệu: {str(e)}")
 
     def delete_row(self, item):
-        if messagebox.askyesno("Xác nhận", "Bạn có chắc muốn xóa dòng này?"):
-            # Lấy index từ tags
-            tags = self.tree.item(item)['tags']
-            row_index = int(tags[1].split('_')[1])
+        """Xóa một dòng từ TreeView và DataFrame"""
+        try:
+            # Lấy index của dòng trong DataFrame
+            values = self.tree.item(item)['values']
+            if not values:
+                return
             
-            # Xóa khỏi DataFrame
-            self.df = self.df.drop(row_index)
+            # Tìm dòng trong DataFrame dựa trên tất cả các giá trị
+            mask = pd.Series([True] * len(self.df))
+            for i, col in enumerate(self.df.columns):
+                mask &= (self.df[col] == values[i])
             
-            # Lưu vào file
-            self.app.save_data(self.df)
-            
-            # Cập nhật hiển thị
-            self.load_data()
-            messagebox.showinfo("Thành công", "Đã xóa dữ liệu!")
+            # Xác nhận xóa
+            if messagebox.askyesno("Xác nhận", "Bạn có chắc muốn xóa dữ liệu này?"):
+                # Xóa từ DataFrame
+                self.df = self.df[~mask]
+                
+                # Lưu DataFrame
+                if self.app.save_data(self.df):
+                    # Xóa từ TreeView
+                    self.tree.delete(item)
+                    messagebox.showinfo("Thành công", "Đã xóa dữ liệu!")
+                    
+                    # Cập nhật lại hiển thị
+                    self.load_data()
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Không thể xóa dữ liệu: {str(e)}")
 
     def toggle_panel(self):
         if not self.panel_visible:
@@ -525,16 +561,35 @@ class DataViewer:
         self.hide_menu()
 
     def toggle_menu(self):
+        """Bật/tắt menu"""
         if hasattr(self, 'menu_visible') and self.menu_visible:
             self.hide_menu()
         else:
             self.show_menu()
 
     def show_menu(self):
-        # Tính toán vị trí menu dựa trên vị trí toggle button
-        x = self.corner_frame.winfo_x()
-        y = self.corner_frame.winfo_y() + self.corner_frame.winfo_height()
+        """Hiển thị menu"""
+        # Tạo menu frame nếu chưa tồn tại
+        if not hasattr(self, 'menu_frame'):
+            self.menu_frame = tk.Frame(self.master, bg='white', relief='raised', bd=1)
+            
+            # Thêm các nút menu
+            menu_buttons = [
+                ("Sửa", self.edit_selected),
+                ("Xóa", self.delete_selected),
+                ("Làm mới", self.load_data)
+            ]
+            
+            for text, command in menu_buttons:
+                btn = tk.Button(self.menu_frame, text=text, command=command,
+                              bg='white', relief='flat', width=10)
+                btn.pack(fill='x')
         
+        # Tính toán vị trí menu dựa trên vị trí chut
+        x = self.master.winfo_pointerx() - self.master.winfo_rootx()
+        y = self.master.winfo_pointery() - self.master.winfo_rooty()
+        
+        # Hiển thị menu
         self.menu_frame.place(x=x, y=y)
         self.menu_visible = True
         
@@ -542,12 +597,22 @@ class DataViewer:
         self.master.bind('<Button-1>', self.check_mouse_click)
 
     def hide_menu(self):
-        self.menu_frame.place_forget()
+        """Ẩn menu"""
+        if hasattr(self, 'menu_frame'):
+            self.menu_frame.place_forget()
         self.menu_visible = False
         self.master.unbind('<Button-1>')
 
     def check_mouse_click(self, event):
-        # Kiểm tra click có nằm ngoài menu không
-        if not self.menu_frame.winfo_containing(event.x_root, event.y_root):
-            self.hide_menu()
+        """Kiểm tra click có nằm ngoài menu không"""
+        if hasattr(self, 'menu_frame'):
+            if not self.menu_frame.winfo_containing(event.x_root, event.y_root):
+                self.hide_menu()
+
+    def create_entry_with_validation(self, frame, column):
+        entry = ttk.Entry(frame)
+        if column in ['price', 'bathrooms', 'bedrooms', 'area']:
+            vcmd = (frame.register(self.validate_number), '%P')
+            entry.configure(validate='key', validatecommand=vcmd)
+        return entry
 
