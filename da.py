@@ -277,10 +277,7 @@ class App:
     def export_data(self):
         df = read_data(self.filename)
         export_data(df)
-    def show_data_explorer(self):
-        # Tạo cửa sổ mới để khám phá dữ liệu
-        explorer_window = tk.Toplevel(self.master)
-        DataExplorer(explorer_window)
+        
     def show_data_viewer(self):
         # Tạo cửa sổ mới để xem dữ liệu
         data_window = tk.Toplevel(self.master)
