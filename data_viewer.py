@@ -457,14 +457,20 @@ class DataViewer:
             self.load_data()  # Tải dữ liệu mới
         else:
             messagebox.showwarning("Cảnh báo", "Vui lòng nhập từ khóa tìm kiếm!")
+
     def sort_data(self):
         """Sắp xếp dữ liệu theo giá."""
+        # Tạo một bản sao của DataFrame gốc
+        sorted_df = self.original_df.copy()
         # Hiển thị hộp thoại để chọn thứ tự sắp xếp
         sort_order = messagebox.askyesno("Thứ tự sắp xếp", "Sắp xếp giá tăng dần?")
         # Sắp xếp DataFrame theo cột 'price'
-        self.df = self.df.sort_values(by='price', ascending=sort_order)
+        sorted_df = sorted_df.sort_values(by='price', ascending=sort_order)
+        # Cập nhật self.df với bản sao đã sắp xếp
+        self.df = sorted_df
         # Tải lại dữ liệu vào Treeview
         self.load_data()
+
     def reset_data(self):
         self.df = self.original_df.copy()  # Khôi phục lại dữ liệu gốc
         self.current_index = 0  # Reset chỉ số hiện tại
