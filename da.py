@@ -219,65 +219,6 @@ class App:
                   width=30).pack(pady=10)
         menubar = Menu(master)
         
-        # Tạo menu chức năng
-        function_menu = Menu(menubar, tearoff=0)
-        function_menu.add_command(label="1. Đọc dữ liệu", command=self.read_data)
-        function_menu.add_command(label="2. Thêm dữ liệu mới", command=self.add_row)
-        function_menu.add_command(label="3. Cập nhật dữ liệu", command=self.update_row)
-        function_menu.add_command(label="4. Xóa dữ liệu", command=self.delete_row)
-        function_menu.add_command(label="5. Làm sạch dữ liệu", command=self.clean_data)
-        function_menu.add_command(label="6. Chuẩn hóa dữ liệu", command=self.normalize_data)
-        function_menu.add_command(label="7. Trực quan hóa dữ liệu", command=self.plot_data)
-        function_menu.add_command(label="8. Xuất dữ liệu", command=self.export_data)
-        
-        # Thêm menu chức năng vào menubar
-        menubar.add_cascade(label="Chức năng", menu=function_menu)
-        
-        # Gán menubar cho cửa sổ
-        master.config(menu=menubar)
-
-        # Frame cho các nút chức năng chính
-        self.main_frame = ttk.Frame(master, padding="20")
-        self.main_frame.pack(fill='both', expand=True)
-        
-        # Tiêu đề
-        title_label = ttk.Label(self.main_frame, 
-                              text="Chọn chức năng phân tích:",
-                              font=('Helvetica', 12, 'bold'))
-        title_label.pack(pady=20)
-
-    def read_data(self):
-        df = read_data(self.filename)
-        print("Dữ liệu hiện tại:")
-        print(df.head())
-
-    def add_row(self):
-        add_row(self.filename)
-
-    def update_row(self):
-        update_row(self.filename)
-
-    def delete_row(self):
-        delete_row(self.filename)
-
-    def clean_data(self):
-        df = read_data(self.filename)
-        df = clean_data(df)
-        df.to_csv(self.filename, index=False)
-
-    def normalize_data(self):
-        df = read_data(self.filename)
-        df = normalize_data(df)
-        df.to_csv(self.filename, index=False)
-
-    def plot_data(self):
-        df = read_data(self.filename)
-        plot_data(df)
-
-    def export_data(self):
-        df = read_data(self.filename)
-        export_data(df)
-        
     def show_data_viewer(self):
         # Tạo cửa sổ mới để xem dữ liệu
         data_window = tk.Toplevel(self.master)

@@ -1,11 +1,12 @@
 import tkinter as tk
 from tkinter import ttk
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import seaborn as sns
 from config import DATA_PATH
 from utils import read_data
-import seaborn as sns
 
 class DataExplorer:
     def __init__(self, master, app):
@@ -193,6 +194,7 @@ class DataExplorer:
         canvas = FigureCanvasTkAgg(plt.gcf(), master=self.heatmap_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill='both', expand=True)
+        
     def display_basic_stats(self, parent_frame):
         # Tạo Text widget với scrollbar
         text_frame = ttk.Frame(parent_frame)
