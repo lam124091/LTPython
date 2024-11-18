@@ -19,6 +19,7 @@ class DataViewer:
         
         # Khởi tạo các biến
         self.df = pd.read_csv(DATA_PATH)
+        self.original_df = self.df.copy()
         self.current_index = 0
         self.rows_per_page = ROWS_PER_PAGE
         self.panel_width = 400
@@ -115,44 +116,6 @@ class DataViewer:
             self.tree.tag_configure('oddrow', background='#E6E6FA')  # Tím nhạt
             self.tree.tag_configure('evenrow', background='#FFE4E1')  # Hồng phấn
 
-    def setup_tree(self):
-        # Tạo frame container cho tree và scrollbar
-        tree_frame = ttk.Frame(self.data_frame)
-        tree_frame.pack(fill='both', expand=True)
-        
-        # Tạo và cấu hình Treeview
-        self.tree = ttk.Treeview(
-            tree_frame,
-            style="Custom.Treeview",
-            columns=list(self.df.columns),
-            show='headings',
-            selectmode='extended'
-        )
-        
-        # Tạo scrollbars
-        vsb = ttk.Scrollbar(tree_frame, orient="vertical", command=self.tree.yview)
-        hsb = ttk.Scrollbar(tree_frame, orient="horizontal", command=self.tree.xview)
-        self.tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
-        
-        # Grid layout
-        self.tree.grid(column=0, row=0, sticky='nsew')
-        vsb.grid(column=1, row=0, sticky='ns')
-        hsb.grid(column=0, row=1, sticky='ew')
-        
-        # Configure grid weights
-        tree_frame.grid_columnconfigure(0, weight=1)
-        tree_frame.grid_rowconfigure(0, weight=1)
-        
-        # Định dạng các cột
-        for col in self.df.columns:
-            self.tree.heading(col, text=col, anchor='center')
-            self.tree.column(col, anchor='center', width=100, minwidth=100)
-        
-        # Tạo tags cho màu sắc xen kẽ và các trường hợp đặc biệt
-        self.tree.tag_configure('oddrow', background='#f5f5f5')
-        self.tree.tag_configure('evenrow', background='#ffffff')
-        self.tree.tag_configure('high_price', background='#e8f5e9', foreground='#2e7d32')
-        self.tree.tag_configure('low_price', background='#ffebee', foreground='#c62828')
     def setup_tree(self):
         # Tạo frame container cho tree và scrollbar
         tree_frame = ttk.Frame(self.data_frame)
@@ -489,8 +452,7 @@ class DataViewer:
     def search_data(self):
         search_term = self.search_entry.get().strip().lower()
         if search_term:
-            filtered_df = self.df[self.df.apply(lambda row: row.astype(str).str.contains(search_term).any(), axis=1)]
-            self.current_index = 0  # Reset chỉ số hiện tại
+            filtered_df = self.original_df[self.original_df.apply(lambda row: row.astype(str).str.contains(search_term).any(), axis=1)]
             self.df = filtered_df  # Cập nhật DataFrame với dữ liệu đã lọc
             self.load_data()  # Tải dữ liệu mới
         else:
@@ -503,7 +465,10 @@ class DataViewer:
         self.df = self.df.sort_values(by='price', ascending=sort_order)
         # Tải lại dữ liệu vào Treeview
         self.load_data()
-
+    def reset_data(self):
+        self.df = self.original_df.copy()  # Khôi phục lại dữ liệu gốc
+        self.current_index = 0  # Reset chỉ số hiện tại
+        self.load_data()  # Tải lại dữ liệu gốc
     def create_panel_buttons(self):
         # Xóa các buttons cũ nếu có
         for widget in self.panel_frame.winfo_children():
@@ -533,6 +498,12 @@ class DataViewer:
                 'command': self.delete_selected,
                 'bg': '#FF4444',
                 'hover': '#FF0000'
+            },
+            {
+                'text': "🔄 Làm mới",
+                'command': self.reset_data,
+                'bg': '#2196F3',
+                'hover': '#1976D2'
             }
         ]
         
