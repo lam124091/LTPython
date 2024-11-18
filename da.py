@@ -126,7 +126,7 @@ def clean_data(df):
 # Chuẩn hóa dữ liệu
 def normalize_data(df):
 
-    # Chuyển đổi kiểu dữ liệu ???
+    # Chuyển đổi kiểu dữ liệu
     if 'numeric_column' in df.columns:
         df_normalized['numeric_column'] = pd.to_numeric(df['numeric_column'], errors='coerce')
 
@@ -218,7 +218,7 @@ class App:
                   command=self.show_data_explorer,
                   width=30).pack(pady=10)
         menubar = Menu(master)
-        
+
     def show_data_viewer(self):
         # Tạo cửa sổ mới để xem dữ liệu
         data_window = tk.Toplevel(self.master)

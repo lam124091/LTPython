@@ -185,6 +185,16 @@ class DataViewer:
         center_frame.grid_columnconfigure(3, minsize=100)  # Nút sau
         center_frame.grid_columnconfigure(4, weight=1)  # Khoảng trống bên phải
         
+        #Nút tìm kiếm
+        search_frame = ttk.Frame(control_frame)
+        search_frame.pack(side='left', padx=(0, 10))
+
+        self.search_entry = ttk.Entry(search_frame)
+        self.search_entry.pack(side='left', padx=(0, 5))
+    
+        search_button = ttk.Button(search_frame, text="Tìm kiếm", command=self.search_data)
+        search_button.pack(side='left')
+
         # Nút trang trước
         self.prev_btn = ttk.Button(
             center_frame, 
@@ -433,6 +443,16 @@ class DataViewer:
             self.panel_frame.pack_forget()
             self.toggle_btn.configure(text="☰")
             self.panel_visible = False
+
+    def search_data(self):
+        search_term = self.search_entry.get().strip().lower()
+        if search_term:
+            filtered_df = self.df[self.df.apply(lambda row: row.astype(str).str.contains(search_term).any(), axis=1)]
+            self.current_index = 0  # Reset chỉ số hiện tại
+            self.df = filtered_df  # Cập nhật DataFrame với dữ liệu đã lọc
+            self.load_data()  # Tải dữ liệu mới
+        else:
+            messagebox.showwarning("Cảnh báo", "Vui lòng nhập từ khóa tìm kiếm!")
 
     def create_panel_buttons(self):
         # Xóa các buttons cũ nếu có
