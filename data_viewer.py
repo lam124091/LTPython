@@ -153,7 +153,45 @@ class DataViewer:
         self.tree.tag_configure('evenrow', background='#ffffff')
         self.tree.tag_configure('high_price', background='#e8f5e9', foreground='#2e7d32')
         self.tree.tag_configure('low_price', background='#ffebee', foreground='#c62828')
-
+    def setup_tree(self):
+        # Tạo frame container cho tree và scrollbar
+        tree_frame = ttk.Frame(self.data_frame)
+        tree_frame.pack(fill='both', expand=True)
+    
+        # Tạo và cấu hình Treeview
+        self.tree = ttk.Treeview(
+            tree_frame,
+            style="Custom.Treeview",
+            columns=list(self.df.columns),
+            show='headings',
+            selectmode='extended'
+        )
+    
+        # Tạo scrollbars
+        vsb = ttk.Scrollbar(tree_frame, orient="vertical", command=self.tree.yview)
+        hsb = ttk.Scrollbar(tree_frame, orient="horizontal", command=self.tree.xview)
+        self.tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+    
+        # Grid layout
+        self.tree.grid(column=0, row=0, sticky='nsew')
+        vsb.grid(column=1, row=0, sticky='ns')
+        hsb.grid(column=0, row=1, sticky='ew')
+    
+        # Configure grid weights
+        tree_frame.grid_columnconfigure(0, weight=1)
+        tree_frame.grid_rowconfigure(0, weight=1)
+    
+        # Định dạng các cột
+        for col in self.df.columns:
+            self.tree.heading(col, text=col, anchor='center', command=lambda c=col: self.sort_column(c, False))
+            self.tree.column(col, anchor='center', width=100, minwidth=100)
+    
+        # Tạo tags cho màu sắc xen kẽ và các trường hợp đặc biệt
+        self.tree.tag_configure('oddrow', background='#f5f5f5')
+        self.tree.tag_configure('evenrow', background='#ffffff')
+        self.tree.tag_configure('high_price', background='#e8f5e9', foreground='#2e7d32')
+        self.tree.tag_configure('low_price', background='#ffebee', foreground='#c62828')
+    
     def setup_controls(self):
         # Frame cho điều khiển với padding
         control_frame = ttk.Frame(self.master, padding="5 10 5 10")
@@ -194,6 +232,10 @@ class DataViewer:
     
         search_button = ttk.Button(search_frame, text="Tìm kiếm", command=self.search_data)
         search_button.pack(side='left')
+        
+        # Nút sắp xếp
+        self.sort_button = ttk.Button(control_frame, text="Sắp xếp theo giá", command=self.sort_data)
+        self.sort_button.pack(side='left', padx=(0, 10))
 
         # Nút trang trước
         self.prev_btn = ttk.Button(
@@ -453,6 +495,14 @@ class DataViewer:
             self.load_data()  # Tải dữ liệu mới
         else:
             messagebox.showwarning("Cảnh báo", "Vui lòng nhập từ khóa tìm kiếm!")
+    def sort_data(self):
+        """Sắp xếp dữ liệu theo giá."""
+        # Hiển thị hộp thoại để chọn thứ tự sắp xếp
+        sort_order = messagebox.askyesno("Thứ tự sắp xếp", "Sắp xếp giá tăng dần?")
+        # Sắp xếp DataFrame theo cột 'price'
+        self.df = self.df.sort_values(by='price', ascending=sort_order)
+        # Tải lại dữ liệu vào Treeview
+        self.load_data()
 
     def create_panel_buttons(self):
         # Xóa các buttons cũ nếu có
