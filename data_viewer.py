@@ -411,31 +411,38 @@ class DataViewer:
     def delete_row(self, item):
         """Xóa một dòng từ TreeView và DataFrame"""
         try:
-            # Lấy index của dòng trong DataFrame
-            values = self.tree.item(item)['values']
-            if not values:
+            selected_items = self.tree.selection()  # Lấy tất cả các mục được chọn
+            if not selected_items:
+                messagebox.showwarning("Cảnh báo", "Vui lòng chọn ít nhất một dòng để xóa!")
                 return
-            
-            # Tìm dòng trong DataFrame dựa trên tất cả các giá trị
-            mask = pd.Series([True] * len(self.df))
-            for i, col in enumerate(self.df.columns):
-                mask &= (self.df[col] == values[i])
             
             # Xác nhận xóa
             if messagebox.askyesno("Xác nhận", "Bạn có chắc muốn xóa dữ liệu này?"):
-                # Xóa từ DataFrame
-                self.df = self.df[~mask]
+                for item in selected_items:
+                    # Lấy giá trị của dòng hiện tại
+                    values = self.tree.item(item)['values']
+                    if not values:
+                        continue
+                
+                    # Tìm dòng trong DataFrame dựa trên tất cả các giá trị
+                    mask = pd.Series([True] * len(self.df))
+                    for i, col in enumerate(self.df.columns):
+                        mask &= (self.df[col] == values[i])
+                
+                    # Xóa từ DataFrame
+                    self.df = self.df[~mask]
+                
+                    # Xóa từ TreeView
+                    self.tree.delete(item)
                 
                 # Lưu DataFrame
                 if self.app.save_data(self.df):
-                    # Xóa từ TreeView
-                    self.tree.delete(item)
-                    messagebox.showinfo("Thành công", "Đã xóa dữ liệu!")
-                    
+                    messagebox.showinfo("Thành công", "Đã xóa dữ liệu!", parent=self.master)
+                
                     # Cập nhật lại hiển thị
                     self.load_data()
         except Exception as e:
-            messagebox.showerror("Lỗi", f"Không thể xóa dữ liệu: {str(e)}")
+            messagebox.showerror("Lỗi", f"Không thể xóa dữ liệu: {str(e)}", parent=self.master)
 
     def toggle_panel(self):
         if not self.panel_visible:
@@ -463,7 +470,7 @@ class DataViewer:
         # Tạo một bản sao của DataFrame gốc
         sorted_df = self.original_df.copy()
         # Hiển thị hộp thoại để chọn thứ tự sắp xếp
-        sort_order = messagebox.askyesno("Thứ tự sắp xếp", "Sắp xếp giá tăng dần?")
+        sort_order = messagebox.askyesno("Thứ tự sắp xếp", "Sắp xếp giá tăng dần?", parent=self.master)
         # Sắp xếp DataFrame theo cột 'price'
         sorted_df = sorted_df.sort_values(by='price', ascending=sort_order)
         # Cập nhật self.df với bản sao đã sắp xếp
