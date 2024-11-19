@@ -418,34 +418,42 @@ class DataViewer:
         
             # Xác nhận xóa
             if messagebox.askyesno("Xác nhận", "Bạn có chắc muốn xóa dữ liệu này?", parent=self.master):
-                for item in selected_items:
-                    # Lấy giá trị của dòng hiện tại
-                    values = self.tree.item(item)['values']
-                    if not values:
-                        continue
+                try:
+                    for item in selected_items:
+                        # Lấy giá trị của dòng hiện tại
+                        values = self.tree.item(item)['values']
+                        if not values:
+                            continue
+                    
+                        # Tìm dòng trong DataFrame dựa trên tất cả các giá trị
+                        mask = pd.Series([True] * len(self.df))
+                        for i, col in enumerate(self.df.columns):
+                            mask &= (self.df[col] == values[i])
+                    
+                        # Xóa từ DataFrame
+                        self.df = self.df[~mask]
+                    
+                        # Xóa từ TreeView
+                        self.tree.delete(item)
                 
-                    # Tìm dòng trong DataFrame dựa trên tất cả các giá trị
-                    mask = pd.Series([True] * len(self.df))
-                    for i, col in enumerate(self.df.columns):
-                        mask &= (self.df[col] == values[i])
-                
-                    # Xóa từ DataFrame
-                    self.df = self.df[~mask]
-                
-                    # Xóa từ TreeView
-                    self.tree.delete(item)
-            
-                # Lưu DataFrame
-                if self.app.save_data(self.df):
-                    messagebox.showinfo("Thành công", "Đã xóa dữ liệu!", parent=self.master)  # Đặt parent là self.master
-                
+                    # Lưu DataFrame vào file
+                    try:
+                        self.df.to_csv(DATA_PATH, index=False)
+                        messagebox.showinfo("Thành công", "Đã xóa và lưu dữ liệu thành công!", parent=self.master)
+                    except Exception as e:
+                        messagebox.showerror("Lỗi", f"Không thể lưu file: {str(e)}", parent=self.master)
+                        return
+                    
                     # Cập nhật lại hiển thị
-                    self.load_data()  # Gọi load_data để tải lại dữ liệu sau khi xóa thành công
-            else:
-                # Nếu không xác nhận xóa, không làm gì cả
-                return
+                    self.load_data()
+                
+                except Exception as e:
+                    messagebox.showerror("Lỗi", f"Lỗi khi xóa dữ liệu: {str(e)}", parent=self.master)
+                    return
+            
         except Exception as e:
-            messagebox.showerror("Lỗi", f"Không thể xóa dữ liệu: {str(e)}", parent=self.master)
+            messagebox.showerror("Lỗi", f"Lỗi không xác định: {str(e)}", parent=self.master)
+
     def toggle_panel(self):
         if not self.panel_visible:
             # Hiện panel 
