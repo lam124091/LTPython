@@ -413,11 +413,11 @@ class DataViewer:
         try:
             selected_items = self.tree.selection()  # Lấy tất cả các mục được chọn
             if not selected_items:
-                messagebox.showwarning("Cảnh báo", "Vui lòng chọn ít nhất một dòng để xóa!")
+                messagebox.showwarning("Cảnh báo", "Vui lòng chọn ít nhất một dòng để xóa!", parent=self.master)
                 return
-            
+        
             # Xác nhận xóa
-            if messagebox.askyesno("Xác nhận", "Bạn có chắc muốn xóa dữ liệu này?"):
+            if messagebox.askyesno("Xác nhận", "Bạn có chắc muốn xóa dữ liệu này?", parent=self.master):
                 for item in selected_items:
                     # Lấy giá trị của dòng hiện tại
                     values = self.tree.item(item)['values']
@@ -434,16 +434,18 @@ class DataViewer:
                 
                     # Xóa từ TreeView
                     self.tree.delete(item)
-                
+            
                 # Lưu DataFrame
                 if self.app.save_data(self.df):
-                    messagebox.showinfo("Thành công", "Đã xóa dữ liệu!", parent=self.master)
+                    messagebox.showinfo("Thành công", "Đã xóa dữ liệu!", parent=self.master)  # Đặt parent là self.master
                 
                     # Cập nhật lại hiển thị
-                    self.load_data()
+                    self.load_data()  # Gọi load_data để tải lại dữ liệu sau khi xóa thành công
+            else:
+                # Nếu không xác nhận xóa, không làm gì cả
+                return
         except Exception as e:
             messagebox.showerror("Lỗi", f"Không thể xóa dữ liệu: {str(e)}", parent=self.master)
-
     def toggle_panel(self):
         if not self.panel_visible:
             # Hiện panel 
