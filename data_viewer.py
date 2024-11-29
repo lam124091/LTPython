@@ -558,56 +558,196 @@ class DataViewer:
             btn.bind('<Enter>', lambda e, b=btn, h=config['hover']: b.config(bg=h))
             btn.bind('<Leave>', lambda e, b=btn, c=config['bg']: b.config(bg=c))
 
+    def calculate_property_rules(self, df):
+        """Tính toán các giới hạn dựa trên phân tích dữ liệu"""
+        property_rules = {}
+        
+        # Quy định cơ bản cho từng loại
+        base_rules = {
+            'Flat': {
+                'min_area': 2, 'max_area': 15,
+                'max_bedrooms': 4, 'max_baths': 4,
+                'min_bedrooms': 1
+            },
+            'House': {
+                'min_area': 3, 'max_area': 50,
+                'max_bedrooms': 8, 'max_baths': 8,
+                'min_bedrooms': 2
+            },
+            'Penthouse': {
+                'min_area': 8, 'max_area': 30,
+                'max_bedrooms': 6, 'max_baths': 6,
+                'min_bedrooms': 2
+            },
+            'Upper Portion': {
+                'min_area': 2, 'max_area': 20,
+                'max_bedrooms': 4, 'max_baths': 4,
+                'min_bedrooms': 1
+            },
+            'Lower Portion': {
+                'min_area': 2, 'max_area': 20,
+                'max_bedrooms': 4, 'max_baths': 4,
+                'min_bedrooms': 1
+            },
+            'Room': {  # Thêm quy định cho Room
+                'min_area': 1, 'max_area': 10,
+                'max_bedrooms': 2, 'max_baths': 2,
+                'min_bedrooms': 1
+            }
+        }
+        
+        # Xử lý cho mỗi loại bất động sản trong dữ liệu
+        for prop_type in df['property_type'].unique():
+            prop_data = df[df['property_type'] == prop_type]
+            
+            # Tính thống kê cho giá/Marla
+            price_per_marla = prop_data['price'] / prop_data['Area_in_Marla']
+            price_stats = price_per_marla.describe()
+            min_price = price_stats['25%'] * 0.7  # Giảm 30% của Q1
+            max_price = price_stats['75%'] * 1.5  # Tăng 50% của Q3
+
+            # Nếu loại bất động sản không có trong base_rules, sử dụng quy định mặc định
+            if prop_type not in base_rules:
+                base_rules[prop_type] = {
+                    'min_area': 1, 'max_area': 20,
+                    'max_bedrooms': 4, 'max_baths': 4,
+                    'min_bedrooms': 1
+                }
+            
+            # Kết hợp rules
+            property_rules[prop_type] = {
+                **base_rules[prop_type],
+                'min_price_per_marla': min_price,
+                'max_price_per_marla': max_price,
+                'min_bath_ratio': 0.5,
+                'max_bath_ratio': 1.5
+            }
+        
+        return property_rules
+
     def clean_data(self):
-        # Lưu số dòng ban đầu để thống kê
+        """Hàm làm sạch dữ liệu"""
+        # Thiết lập kích thước cửa sổ thông báo
+        self.master.geometry("800x600")
+        
+        # 1. Khởi tạo biến thống kê
+        initial_count = len(self.df)
+        stats = {
+            'missing_values': 0,
+            'duplicates': 0,
+            'invalid_numeric': 0,
+            'property_rules': {
+                'Flat': 0, 'House': 0, 'Penthouse': 0,
+                'Upper Portion': 0, 'Lower Portion': 0, 'Room': 0
+            }
+        }
+        
+        # 2. Xử lý giá trị trống
         rows_before = len(self.df)
-        
-        # 1. Xử lý giá trị trống (NaN)
         self.df = self.df.dropna()
-        print(f"Số dòng sau khi xử lý giá trị trống: {len(self.df)}")
+        stats['missing_values'] = rows_before - len(self.df)
         
-        # 2. Xử lý giá trị số không hợp lệ
-        numeric_columns = ['bedrooms', 'baths', 'area']
+        # 3. Xử lý giá trị số không hợp lệ
+        rows_before = len(self.df)
+        numeric_columns = ['price', 'bedrooms', 'baths', 'Area_in_Marla']
         for col in numeric_columns:
             if col in self.df.columns:
                 self.df[col] = pd.to_numeric(self.df[col], errors='coerce')
-                self.df = self.df[self.df[col] >= 0]
+                self.df = self.df[self.df[col] > 0]
+        stats['invalid_numeric'] = rows_before - len(self.df)
         
-        print(f"Số dòng sau khi xử lý giá trị số không hợp lệ: {len(self.df)}")
-        
-        # 3. Loại bỏ dữ liệu trùng lặp
+        # 4. Xử lý dữ liệu trùng lặp
+        rows_before = len(self.df)
         self.df = self.df.drop_duplicates()
-        print(f"S dòng sau khi xử lý trùng lặp: {len(self.df)}")
+        stats['duplicates'] = rows_before - len(self.df)
         
-        # Cập nhật DataFrame trong app
-        self.app.df = self.df
+        # 5. Tính toán rules kết hợp
+        property_rules = self.calculate_property_rules(self.df)
         
-        # Lưu DataFrame đã clean vào file
-        self.app.save_data(self.df)
+        # 6. Áp dụng điều kiện và lọc dữ liệu
+        self.df['price_per_marla'] = self.df['price'] / self.df['Area_in_Marla']
         
-        # Cập nhật hiển thị
-        self.load_data()
-        
-        # Tính số dòng đã xóa
-        rows_removed = rows_before - len(self.df)
-        
-        # Thông báo hoàn thành với thống kê
-        messagebox.showinfo(
-            "Hoàn thành", 
-            f"Dữ liệu đã được làm sạch!\n\n"
-            f"- Số dòng ban đầu: {rows_before:,}\n"
-            f"- Số dòng đã xóa: {rows_removed:,}\n"
-            f"- Số dòng còn lại: {len(self.df):,}\n\n"
-            f"Đã xóa:\n"
-            f"- Các dòng có giá trị trống\n"
-            f"- Các dòng có số phòng, diện tích âm\n"
-            f"- Các dòng trng lặp"
-        )
-        
-        # Quay về DataViewer
-        self.master.lift()  # Đưa cửa s DataViewer lên trên
-        self.master.focus_force()  # Focus vào DataViewer
+        for prop_type, rules in property_rules.items():
+            invalid_rows = self.df[
+                (self.df['property_type'] == prop_type) & 
+                (
+                    # Điều kiện cố định về diện tích
+                    (self.df['Area_in_Marla'] < rules['min_area']) | 
+                    (self.df['Area_in_Marla'] > rules['max_area']) |
+                    
+                    # Điều kiện về giá được tính từ dữ liệu
+                    (self.df['price_per_marla'] < rules['min_price_per_marla']) |
+                    (self.df['price_per_marla'] > rules['max_price_per_marla']) |
+                    
+                    # Điều kiện cố định về số phòng
+                    (self.df['bedrooms'] < rules['min_bedrooms']) |
+                    (self.df['bedrooms'] > rules['max_bedrooms']) |
+                    (self.df['baths'] > rules['max_baths']) |
+                    
+                    # Điều kiện về tỉ lệ phòng
+                    (self.df['baths'] < self.df['bedrooms'] * rules['min_bath_ratio']) |  # Tối thiểu phòng tắm
+                    (self.df['baths'] > self.df['bedrooms'] * rules['max_bath_ratio']) |  # Tối đa phòng tắm
+                    (self.df['baths'] > self.df['bedrooms'] + 2)  # Không quá hơn 2 phòng
+                )
+            ]
+            stats['property_rules'][prop_type] = len(invalid_rows)
+            self.df = self.df.drop(invalid_rows.index)
 
+        # 7. Cập nhật thông báo
+        message = f"""
+╔═══════════════════════════ KẾT QUẢ LÀM SẠCH DỮ LIỆU ═══════════════════════════╗
+
+📊 THỐNG KÊ TỔNG QUÁT
+• Số dòng ban đầu: {initial_count:,}
+• Số dòng đã xóa: {initial_count - len(self.df):,}
+• Số dòng còn lại: {len(self.df):,}
+
+🧹 CHI TIẾT DỮ LIỆU ĐÃ XÓA
+• Dòng có giá trị trống: {stats['missing_values']:,}
+• Dòng có giá trị số không hợp lệ: {stats['invalid_numeric']:,}
+• Dòng trùng lặp: {stats['duplicates']:,}
+
+📏 ĐIỀU KIỆN CHUNG
+• Giá/Marla: Tính theo phân phối thực tế (Q1 * 0.7 - Q3 * 1.5)
+• Tỉ lệ phòng tắm/ngủ: 0.5 - 1.5 và không quá hơn 2 phòng
+• Số phòng tắm phải từ 1/2 đến 3/2 số phòng ngủ
+
+📋 ĐIỀU KIỆN THEO TỪNG LOẠI BẤT ĐỘNG SẢN"""
+
+        # 8. Thêm thông tin chi tiết cho từng loại
+        for prop_type, count in stats['property_rules'].items():
+            if count > 0:
+                rules = property_rules[prop_type]
+                message += f"""
+
+{prop_type}: {count:,} dòng không hợp lệ
+• Diện tích: {rules['min_area']} - {rules['max_area']} Marla
+• Giá/Marla: {rules['min_price_per_marla']:,.0f} - {rules['max_price_per_marla']:,.0f} PKR
+• Số phòng ngủ: {rules['min_bedrooms']} - {rules['max_bedrooms']} phòng
+• Số phòng tắm tối đa: {rules['max_baths']} phòng"""
+
+        message += "\n\n╚══════════════════════════════════════════════════════════════════════════════╝"
+
+        # 9. Tạo và hiển thị dialog
+        dialog = tk.Toplevel(self.master)
+        dialog.title("Kết quả làm sạch dữ liệu")
+        dialog.geometry("800x600")
+        
+        text = tk.Text(dialog, wrap=tk.WORD, width=80, height=30)
+        scrollbar = ttk.Scrollbar(dialog, orient="vertical", command=text.yview)
+        text.configure(yscrollcommand=scrollbar.set)
+        
+        # Đặt vị trí các widget
+        text.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+        scrollbar.pack(side="right", fill="y")
+        
+        # Chèn nội dung và cấu hình
+        text.insert("1.0", message)
+        text.configure(state="disabled")
+        
+        # Tạo nút OK
+        ok_button = ttk.Button(dialog, text="OK", command=dialog.destroy)
+        ok_button.pack(pady=10)
     def edit_selected(self):
         selected_items = self.tree.selection()
         if not selected_items:
