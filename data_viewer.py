@@ -190,9 +190,6 @@ class DataViewer:
         search_frame = ttk.Frame(control_frame)
         search_frame.pack(side='left', padx=(0, 10))
 
-        self.search_entry = ttk.Entry(search_frame)
-        self.search_entry.pack(side='left', padx=(0, 5))
-    
         search_button = ttk.Button(search_frame, text="Tìm kiếm", command=self.search_data)
         search_button.pack(side='left')
         
@@ -467,13 +464,61 @@ class DataViewer:
             self.panel_visible = False
 
     def search_data(self):
-        search_term = self.search_entry.get().strip().lower()
-        if search_term:
-            filtered_df = self.original_df[self.original_df.apply(lambda row: row.astype(str).str.contains(search_term).any(), axis=1)]
+    # Tạo cửa sổ nhập liệu cho điều kiện tìm kiếm
+        search_window = tk.Toplevel(self.master)
+        search_window.title("Tìm kiếm Dữ liệu")
+    
+        # Tạo frame cho các điều kiện tìm kiếm
+        search_frame = ttk.Frame(search_window, padding="10")
+        search_frame.pack(fill='x')
+
+        # Tạo dictionary để lưu các entry tìm kiếm
+        search_entries = {}
+    
+        # Tạo label và entry cho từng cột
+        for column in self.df.columns:
+            frame = ttk.Frame(search_frame)
+            frame.pack(fill='x', pady=5)
+            ttk.Label(frame, text=column).pack(side='left')
+            entry = ttk.Entry(frame)
+            entry.pack(side='left', fill='x', expand=True, padx=5)
+            search_entries[column] = entry  # Lưu entry vào dictionary
+
+        def perform_search():   
+            # Kiểm tra xem có ít nhất 1 điều kiện nào được nhập hay không
+            if not any(entry.get().strip() for entry in search_entries.values()):
+                messagebox.showwarning("Cảnh báo", "Vui lòng nhập ít nhất một điều kiện tìm kiếm!")
+                return
+        
+            # Lọc DataFrame dựa trên các điều kiện đã nhập
+            filtered_df = self.original_df.copy()
+            conditions = []
+
+            for column, entry in search_entries.items():
+                search_term = entry.get().strip().lower()
+                if search_term:
+                    # Tạo điều kiện tìm kiếm cho cột hiện tại
+                    conditions.append(filtered_df[column].astype(str).str.contains(search_term, na=False, case=False))
+
+            # Kết hợp tất cả các điều kiện bằng phép AND
+            if conditions:
+                combined_condition = conditions[0]
+                for condition in conditions[1:]:
+                    combined_condition &= condition
+            
+                filtered_df = filtered_df[combined_condition]
+
             self.df = filtered_df  # Cập nhật DataFrame với dữ liệu đã lọc
             self.load_data()  # Tải dữ liệu mới
-        else:
-            messagebox.showwarning("Cảnh báo", "Vui lòng nhập từ khóa tìm kiếm!")
+            search_window.destroy()  # Đóng cửa sổ tìm kiếm
+
+        # Tạo nút tìm kiếm
+        search_button = ttk.Button(search_window, text="Tìm kiếm", command=perform_search)
+        search_button.pack(pady=10)
+
+        # Tạo nút hủy
+        cancel_button = ttk.Button(search_window, text="Hủy", command=search_window.destroy)
+        cancel_button.pack(pady=5)
 
     def sort_data(self):
         """Sắp xếp dữ liệu theo giá."""
@@ -492,6 +537,7 @@ class DataViewer:
         self.df = self.original_df.copy()  # Khôi phục lại dữ liệu gốc
         self.current_index = 0  # Reset chỉ số hiện tại
         self.load_data()  # Tải lại dữ liệu gốc
+
     def create_panel_buttons(self):
         # Xóa các buttons cũ nếu có
         for widget in self.panel_frame.winfo_children():
