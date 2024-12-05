@@ -316,13 +316,6 @@ class App:
                 self.data_viewer.tree.selection_set(last_item)
                 self.data_viewer.tree.see(last_item)
                 self.data_viewer.tree.item(last_item, tags=('new_row',))  # Thêm tag cho dòng mới
-
-    def update_data(self):
-        messagebox.showinfo("Thông báo", "Chức năng đang phát triển")
-
-    def delete_data(self):
-        messagebox.showinfo("Thông báo", "Chức năng đang phát triển")
-
     def clean_data(self):
         print("Bắt đầu làm sạch dữ liệu...")
         print(f"Số dòng ban đầu: {len(self.df)}")
