@@ -116,7 +116,7 @@ class DataExplorer:
             widget.destroy()
     
         selected_plot = self.plot_type.get()
-    
+        # Hàm vẽ đồ thị
         if selected_plot == 'Bar Chart':
             # Biểu đồ cột giá tiền các loại bất động sản
             plt.figure(figsize=(10, 6))
