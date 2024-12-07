@@ -474,13 +474,28 @@ class DataViewer:
 
         # Tạo dictionary để lưu các entry tìm kiếm
         search_entries = {}
-    
+        
+        # Định nghĩa giá trị cho các trường cụ thể
+        property_types = ["Flat", "House", "Penthouse", "Upper Portion", "Lower Portion"]
+        cities = ["Islamabad", "Lahore", "Faisalabad", "Rawalpindi", "Karachi"]
+        purposes = ["For Sale", "For Rent"]
+
         # Tạo label và entry cho từng cột
         for column in self.df.columns:
             frame = ttk.Frame(search_frame)
             frame.pack(fill='x', pady=5)
             ttk.Label(frame, text=column).pack(side='left')
-            entry = ttk.Entry(frame)
+            if column == 'property_type':
+                entry = ttk.Combobox(frame, values=property_types)
+                entry.set("")  # Không set giá trị mặc định
+            elif column == 'city':
+                entry = ttk.Combobox(frame, values=cities)
+                entry.set("")  # Không set giá trị mặc định
+            elif column == 'purpose':
+                entry = ttk.Combobox(frame, values=purposes)
+                entry.set("")  # Không set giá trị mặc định
+            else:
+                entry = ttk.Entry(frame)
             entry.pack(side='left', fill='x', expand=True, padx=5)
             search_entries[column] = entry  # Lưu entry vào dictionary
 
@@ -496,6 +511,10 @@ class DataViewer:
 
             for column, entry in search_entries.items():
                 search_term = entry.get().strip().lower()
+                if isinstance(entry, ttk.Combobox) and not search_term:
+                    continue  # Bỏ qua combobox nếu chưa chọn giá trị
+                elif isinstance(entry, ttk.Entry) and not search_term:
+                    continue  # Bỏ qua entry nếu trống
                 if search_term:
                     # Tạo điều kiện tìm kiếm cho cột hiện tại
                     conditions.append(filtered_df[column].astype(str).str.contains(search_term, na=False, case=False))
