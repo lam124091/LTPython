@@ -464,23 +464,39 @@ class DataViewer:
             self.panel_visible = False
 
     def search_data(self):
-    # Tạo cửa sổ nhập liệu cho điều kiện tìm kiếm
+        # Tạo cửa sổ nhập liệu cho điều kiện tìm kiếm
         search_window = tk.Toplevel(self.master)
         search_window.title("Tìm kiếm Dữ liệu")
-    
+
         # Tạo frame cho các điều kiện tìm kiếm
         search_frame = ttk.Frame(search_window, padding="10")
         search_frame.pack(fill='x')
 
         # Tạo dictionary để lưu các entry tìm kiếm
         search_entries = {}
-    
-        # Tạo label và entry cho từng cột
+
+        # Định nghĩa giá trị cho các trường cụ thể
+        property_types = ["Flat", "House", "Penthouse", "Upper Portion", "Lower Portion"]
+        cities = ["Islamabad", "Lahore", "Faisalabad", "Rawalpindi", "Karachi"]
+        purposes = ["For Sale", "For Rent"]
+
+        # Tạo label và combobox cho từng cột
         for column in self.df.columns:
             frame = ttk.Frame(search_frame)
             frame.pack(fill='x', pady=5)
             ttk.Label(frame, text=column).pack(side='left')
-            entry = ttk.Entry(frame)
+
+            if column == 'property_type':
+                entry = ttk.Combobox(frame, values=property_types)
+                entry.set("")  # Không set giá trị mặc định
+            elif column == 'city':
+                entry = ttk.Combobox(frame, values=cities)
+                entry.set("")  # Không set giá trị mặc định
+            elif column == 'purpose':
+                entry = ttk.Combobox(frame, values=purposes)
+                entry.set("")  # Không set giá trị mặc định
+            else:
+                entry = ttk.Entry(frame)
             entry.pack(side='left', fill='x', expand=True, padx=5)
             search_entries[column] = entry  # Lưu entry vào dictionary
 
@@ -489,13 +505,17 @@ class DataViewer:
             if not any(entry.get().strip() for entry in search_entries.values()):
                 messagebox.showwarning("Cảnh báo", "Vui lòng nhập ít nhất một điều kiện tìm kiếm!")
                 return
-        
+
             # Lọc DataFrame dựa trên các điều kiện đã nhập
             filtered_df = self.original_df.copy()
             conditions = []
 
             for column, entry in search_entries.items():
                 search_term = entry.get().strip().lower()
+                if isinstance(entry, ttk.Combobox) and not search_term:
+                    continue  # Bỏ qua combobox nếu chưa chọn giá trị
+                elif isinstance(entry, ttk.Entry) and not search_term:
+                    continue  # Bỏ qua entry nếu trống
                 if search_term:
                     # Tạo điều kiện tìm kiếm cho cột hiện tại
                     conditions.append(filtered_df[column].astype(str).str.contains(search_term, na=False, case=False))
@@ -505,11 +525,15 @@ class DataViewer:
                 combined_condition = conditions[0]
                 for condition in conditions[1:]:
                     combined_condition &= condition
-            
+
                 filtered_df = filtered_df[combined_condition]
 
-            self.df = filtered_df  # Cập nhật DataFrame với dữ liệu đã lọc
-            self.load_data()  # Tải dữ liệu mới
+            if filtered_df.empty:
+                messagebox.showinfo("Kết quả", "Không tìm thấy kết quả nào!")
+            else:
+                self.df = filtered_df  # Cập nhật DataFrame với dữ liệu đã lọc
+                self.load_data()  # Tải dữ liệu mới
+
             search_window.destroy()  # Đóng cửa sổ tìm kiếm
 
         # Tạo nút tìm kiếm
